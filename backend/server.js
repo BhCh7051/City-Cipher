@@ -17,9 +17,6 @@ app.use(express.json());
 app.use('/api/destinations', require('./routes/destinationRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 
-// Initial data seeding function (would be implemented if needed)
-// const seedData = require('./data/seed');
-// seedData();
 
 const PORT = process.env.PORT || 5000;
 
