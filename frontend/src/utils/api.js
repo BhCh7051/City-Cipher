@@ -111,12 +111,42 @@ export const updateUserScore = async (username, isCorrect) => {
   }
 };
 
+// Get user score
+export const getUserScore = async (username) => {
+  try {
+    const response = await api.get(`/users/score/${username}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user score:', error);
+    throw error;
+  }
+};
+
 // Login user
 export const loginUser = async (username, password) => {
   try {
+    // Clear any existing token before login
+    setAuthToken(null);
+    
     const response = await api.post('/users/login', { username, password });
-    if (response.data.token) {
+    if (response.data && response.data.token) {
       setAuthToken(response.data.token);
+      
+      try {
+        // Fetch updated user data including score
+        const userData = await getUserScore(username);
+        return {
+          ...response.data,
+          ...userData
+        };
+      } catch (scoreError) {
+        console.error('Error fetching user score after login:', scoreError);
+        // Return the login data even if score fetch fails
+        return {
+          ...response.data,
+          score: { correct: 0, incorrect: 0 } // Default score
+        };
+      }
     }
     return response.data;
   } catch (error) {
@@ -127,6 +157,18 @@ export const loginUser = async (username, password) => {
 
 // Logout user
 export const logoutUser = () => {
-  setAuthToken(null);
-  window.location.href = '/login';
+  try {
+    // Clear token from localStorage
+    setAuthToken(null);
+    // Clear axios default headers
+    delete api.defaults.headers.common['Authorization'];
+    
+    // Redirect to login page without full page reload
+    window.history.pushState({}, '', '/login');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  } catch (error) {
+    console.error('Error during logout:', error);
+    // Force redirect if there's an error
+    window.location.href = '/login';
+  }
 };

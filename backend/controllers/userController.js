@@ -1,6 +1,34 @@
 const User = require('../models/User');
 const { v4: uuidv4 } = require('uuid');
 
+// Get user score
+const getUserScore = async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Ensure score exists, if not initialize it
+    if (!user.score) {
+      user.score = {
+        correct: 0,
+        incorrect: 0
+      };
+      await user.save();
+    }
+    
+    res.json({
+      username: user.username,
+      score: user.score
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Register new user
 const registerUser = async (req, res) => {
   try {
@@ -15,11 +43,15 @@ const registerUser = async (req, res) => {
     // Generate a unique invite code
     const inviteCode = uuidv4().substring(0, 8);
     
-    // Create user
+    // Create user with initialized score
     const user = await User.create({
       username,
       password,
-      inviteCode
+      inviteCode,
+      score: {
+        correct: 0,
+        incorrect: 0
+      }
     });
     
     res.status(201).json({
@@ -43,6 +75,15 @@ const getUserByInviteCode = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     
+    // Ensure score exists, if not initialize it
+    if (!user.score) {
+      user.score = {
+        correct: 0,
+        incorrect: 0
+      };
+      await user.save();
+    }
+    
     res.json({
       username: user.username,
       score: user.score
@@ -60,6 +101,14 @@ const updateScore = async (req, res) => {
     const user = await User.findOne({ username });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Ensure score exists, if not initialize it
+    if (!user.score) {
+      user.score = {
+        correct: 0,
+        incorrect: 0
+      };
     }
     
     // Update score based on answer
@@ -83,5 +132,6 @@ const updateScore = async (req, res) => {
 module.exports = {
   registerUser,
   getUserByInviteCode,
-  updateScore
+  updateScore,
+  getUserScore
 };
