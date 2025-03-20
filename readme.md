@@ -136,12 +136,12 @@ To add new tests:
 - Docker for containerization
 - The open-source community for various tools and libraries used in this project
 
+Flowchart for GET /api/destinations/random
 
 ```mermaid
 
 
 
-Flowchart for GET /api/destinations/random
 
 flowchart TD
     A[Client Request: GET /api/destinations/random] --> B[getRandomDestination controller]
