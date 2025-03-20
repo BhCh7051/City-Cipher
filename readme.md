@@ -223,7 +223,7 @@ flowchart TD
     
     B -- Error --> H[Return 500: Server Error]
     D -- Error --> H
-    ```
+```
 
 Flowchart for POST /api/users/update-score
 ```mermaid
