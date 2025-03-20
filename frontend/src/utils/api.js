@@ -11,6 +11,42 @@ const api = axios.create({
   }
 });
 
+// Add a request interceptor
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add a response interceptor
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear token and redirect to login if unauthorized
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Helper function to set token
+export const setAuthToken = (token) => {
+  if (token) {
+    localStorage.setItem('token', token);
+  } else {
+    localStorage.removeItem('token');
+  }
+};
+
 // Get random destination
 export const getRandomDestination = async () => {
   try {
@@ -37,9 +73,12 @@ export const checkAnswer = async (destinationId, answer) => {
 };
 
 // Register user
-export const registerUser = async (username) => {
+export const registerUser = async (username, password) => {
   try {
-    const response = await api.post('/users/register', { username });
+    const response = await api.post('/users/register', { username, password });
+    if (response.data.token) {
+      setAuthToken(response.data.token);
+    }
     return response.data;
   } catch (error) {
     console.error('Error registering user:', error);
@@ -70,4 +109,24 @@ export const updateUserScore = async (username, isCorrect) => {
     console.error('Error updating user score:', error);
     throw error;
   }
+};
+
+// Login user
+export const loginUser = async (username, password) => {
+  try {
+    const response = await api.post('/users/login', { username, password });
+    if (response.data.token) {
+      setAuthToken(response.data.token);
+    }
+    return response.data;
+  } catch (error) {
+    console.error('Error logging in:', error);
+    throw error;
+  }
+};
+
+// Logout user
+export const logoutUser = () => {
+  setAuthToken(null);
+  window.location.href = '/login';
 };

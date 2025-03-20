@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { useGameContext } from '../contexts/GameContext';
+import { logoutUser } from '../utils/api';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -35,8 +36,43 @@ const UserName = styled.span`
   font-weight: 600;
 `;
 
+const LoginLink = styled(Link)`
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--primary-color);
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+  
+  &:hover {
+    background: var(--primary-color);
+    color: white;
+  }
+`;
+
+const LogoutButton = styled.button`
+  background: none;
+  border: 2px solid var(--error-color);
+  color: var(--error-color);
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+  
+  &:hover {
+    background: var(--error-color);
+    color: white;
+  }
+`;
+
 const Header = () => {
   const { user } = useGameContext();
+
+  const handleLogout = () => {
+    logoutUser();
+  };
 
   return (
     <HeaderContainer>
@@ -44,12 +80,17 @@ const Header = () => {
         🌍 <span>Globetrotter</span>
       </Logo>
       
-      {user && (
+      {user ? (
         <UserInfo>
           <UserName>
             Welcome, {user.username}!
           </UserName>
+          <LogoutButton onClick={handleLogout}>
+            Logout
+          </LogoutButton>
         </UserInfo>
+      ) : (
+        <LoginLink to="/login">Login</LoginLink>
       )}
     </HeaderContainer>
   );

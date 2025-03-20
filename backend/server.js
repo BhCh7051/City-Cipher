@@ -3,8 +3,10 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
-
+// add logger
+const logger = require('morgan');
 const app = express();
+app.use(logger('dev'));
 
 // Connect to database only if not in test environment
 if (process.env.NODE_ENV !== 'test') {

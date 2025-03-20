@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 // Register new user
 const registerUser = async (req, res) => {
   try {
-    const { username } = req.body;
+    const { username, password } = req.body;
     
     // Check if username exists
     const userExists = await User.findOne({ username });
@@ -18,13 +18,15 @@ const registerUser = async (req, res) => {
     // Create user
     const user = await User.create({
       username,
+      password,
       inviteCode
     });
     
     res.status(201).json({
       username: user.username,
       score: user.score,
-      inviteCode: user.inviteCode
+      inviteCode: user.inviteCode,
+      token: jwt.signToken(user._id)
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
