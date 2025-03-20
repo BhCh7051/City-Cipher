@@ -20,6 +20,7 @@ app.use(express.json());
 // Routes
 app.use('/api/destinations', require('./routes/destinationRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/leaderboard', require('./routes/leaderboard'));
 
 // Only start the server if we're not in a test environment
 if (process.env.NODE_ENV !== 'test') {

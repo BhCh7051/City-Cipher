@@ -6,7 +6,8 @@ import {
   loginUser,
   registerUser,
   logoutUser,
-  getUserScore
+  getUserScore,
+  getLeaderboard
 } from '../utils/api';
 
 const GameContext = createContext();
@@ -21,6 +22,9 @@ export const GameProvider = ({ children }) => {
   const [score, setScore] = useState({ correct: 0, incorrect: 0 });
   const [user, setUser] = useState(null);
   const [authError, setAuthError] = useState(null);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
 
   // Check if user is already logged in
   useEffect(() => {
@@ -65,6 +69,11 @@ export const GameProvider = ({ children }) => {
 
   // Handle answer submission
   const submitAnswer = async (selectedOption) => {
+    if (!currentQuestion) {
+      console.error('No question loaded');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -197,10 +206,36 @@ export const GameProvider = ({ children }) => {
     logoutUser();
   };
 
+  // Load leaderboard
+  const loadLeaderboard = async () => {
+    setIsLeaderboardLoading(true);
+    try {
+      const data = await getLeaderboard();
+      setLeaderboard(data);
+    } catch (error) {
+      console.error('Error loading leaderboard:', error);
+    } finally {
+      setIsLeaderboardLoading(false);
+    }
+  };
+
   // Load first question on mount
   useEffect(() => {
     loadQuestion();
   }, []);
+
+  // Load leaderboard on mount and after each answer
+  useEffect(() => {
+    loadLeaderboard();
+  }, []);
+
+  // Toggle leaderboard visibility
+  const toggleLeaderboard = () => {
+    setIsLeaderboardOpen(!isLeaderboardOpen);
+    if (!isLeaderboardOpen) {
+      loadLeaderboard();
+    }
+  };
 
   return (
     <GameContext.Provider value={{
@@ -211,13 +246,18 @@ export const GameProvider = ({ children }) => {
       score,
       user,
       authError,
+      leaderboard,
+      isLeaderboardLoading,
+      isLeaderboardOpen,
       loadQuestion,
       submitAnswer,
       updateUser,
       resetGame,
       handleLogin,
       handleRegister,
-      handleLogout
+      handleLogout,
+      loadLeaderboard,
+      toggleLeaderboard
     }}>
       {children}
     </GameContext.Provider>

@@ -6,6 +6,8 @@ import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import InvitePage from './pages/InvitePage';
 import LoginPage from './pages/LoginPage';
+import Leaderboard from './components/Leaderboard';
+import LeaderboardButton from './components/LeaderboardButton';
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
           <Route path="/invite/:inviteCode" element={<InvitePage />} />
           <Route path="/login" element={<LoginPage />} />
         </Routes>
+        <Leaderboard />
+        <LeaderboardButton />
       </GameProvider>
     </Router>
   );
