@@ -1,13 +1,25 @@
 const Destination = require('../models/Destination');
+const User = require('../models/User');
 
 // Get a random destination with limited info (just clues)
 const getRandomDestination = async (req, res) => {
   try {
     // Count total destinations
     const count = await Destination.countDocuments();
-    // Get random destination
-    const random = Math.floor(Math.random() * count);
-    const destination = await Destination.findOne().skip(random);
+    
+    // Check if there are any destinations
+    if (count === 0) {
+      return res.status(404).json({ message: 'No destinations available in the database' });
+    }
+
+    // Get random destination using aggregation for more reliable random selection
+    const [destination] = await Destination.aggregate([
+      { $sample: { size: 1 } }
+    ]);
+
+    if (!destination) {
+      return res.status(404).json({ message: 'Failed to fetch random destination' });
+    }
     
     // Extract only necessary info for the question
     const questionData = {
@@ -21,6 +33,13 @@ const getRandomDestination = async (req, res) => {
       { $sample: { size: 3 } },
       { $project: { city: 1, country: 1 } }
     ]);
+    
+    // Handle case where there aren't enough destinations for options
+    if (otherOptions.length < 3) {
+      return res.status(400).json({ 
+        message: 'Not enough destinations in database for multiple choice options' 
+      });
+    }
     
     // Combine correct answer with decoys
     const options = [
@@ -44,6 +63,7 @@ const getRandomDestination = async (req, res) => {
 const checkAnswer = async (req, res) => {
   try {
     const { destinationId, answer } = req.body;
+    const userId = req.user.user_id; // Fix: Get user ID from JWT token
     
     const destination = await Destination.findById(destinationId);
     if (!destination) {
@@ -54,9 +74,29 @@ const checkAnswer = async (req, res) => {
       destination.city.toLowerCase() === answer.city.toLowerCase() && 
       destination.country.toLowerCase() === answer.country.toLowerCase();
     
-    // Return full destination data with answer result
+    // Update user's score based on answer
+    const user = await User.findById(userId);
+    let updatedScore = { correct: 0, incorrect: 0 };
+    
+    if (user) {
+      if (!user.score) {
+        user.score = { correct: 0, incorrect: 0 };
+      }
+      
+      if (isCorrect) {
+        user.score.correct += 1;
+      } else {
+        user.score.incorrect += 1;
+      }
+      
+      await user.save();
+      updatedScore = user.score;
+    }
+    
+    // Return full destination data with answer result and updated score
     res.json({
       isCorrect,
+      score: updatedScore,
       destination: {
         city: destination.city,
         country: destination.country,

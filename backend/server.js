@@ -3,8 +3,10 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
-
+// add logger
+const logger = require('morgan');
 const app = express();
+app.use(logger('dev'));
 
 // Connect to database only if not in test environment
 if (process.env.NODE_ENV !== 'test') {
@@ -18,6 +20,7 @@ app.use(express.json());
 // Routes
 app.use('/api/destinations', require('./routes/destinationRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/leaderboard', require('./routes/leaderboard'));
 
 // Only start the server if we're not in a test environment
 if (process.env.NODE_ENV !== 'test') {

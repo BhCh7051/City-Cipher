@@ -85,6 +85,7 @@ const ErrorMessage = styled.div`
 
 const WelcomeScreen = () => {
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { updateUser } = useGameContext();
@@ -92,8 +93,13 @@ const WelcomeScreen = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!username.trim()) {
-      setError('Please enter a username to continue');
+    if (!username.trim() || !password.trim()) {
+      setError('Please enter both username and password');
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
       return;
     }
     
@@ -101,7 +107,7 @@ const WelcomeScreen = () => {
     setError('');
     
     try {
-      const userData = await registerUser(username);
+      const userData = await registerUser(username, password);
       updateUser(userData);
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to register. Please try again.');
@@ -132,10 +138,17 @@ const WelcomeScreen = () => {
       <Form onSubmit={handleSubmit}>
         <Input
           type="text"
-          placeholder="Enter your Globetrotter username"
+          placeholder="Choose your username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           maxLength={20}
+        />
+        
+        <Input
+          type="password"
+          placeholder="Choose your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
         
         {error && <ErrorMessage>{error}</ErrorMessage>}
