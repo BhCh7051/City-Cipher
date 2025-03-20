@@ -1,4 +1,5 @@
 const Destination = require('../models/Destination');
+const User = require('../models/User');
 
 // Get a random destination with limited info (just clues)
 const getRandomDestination = async (req, res) => {
@@ -62,6 +63,7 @@ const getRandomDestination = async (req, res) => {
 const checkAnswer = async (req, res) => {
   try {
     const { destinationId, answer } = req.body;
+    const userId = req.user.user_id; // Fix: Get user ID from JWT token
     
     const destination = await Destination.findById(destinationId);
     if (!destination) {
@@ -72,9 +74,29 @@ const checkAnswer = async (req, res) => {
       destination.city.toLowerCase() === answer.city.toLowerCase() && 
       destination.country.toLowerCase() === answer.country.toLowerCase();
     
-    // Return full destination data with answer result
+    // Update user's score based on answer
+    const user = await User.findById(userId);
+    let updatedScore = { correct: 0, incorrect: 0 };
+    
+    if (user) {
+      if (!user.score) {
+        user.score = { correct: 0, incorrect: 0 };
+      }
+      
+      if (isCorrect) {
+        user.score.correct += 1;
+      } else {
+        user.score.incorrect += 1;
+      }
+      
+      await user.save();
+      updatedScore = user.score;
+    }
+    
+    // Return full destination data with answer result and updated score
     res.json({
       isCorrect,
+      score: updatedScore,
       destination: {
         city: destination.city,
         country: destination.country,

@@ -80,29 +80,15 @@ export const GameProvider = ({ children }) => {
       const data = await checkAnswer(currentQuestion.id, selectedOption);
       setResult(data);
       
-      // Update local score
-      if (data.isCorrect) {
-        setScore(prev => ({
-          correct: (prev.correct || 0) + 1,
-          incorrect: prev.incorrect || 0
-        }));
+      // Update score automatically from the response
+      if (data.score) {
+        setScore(data.score);
       } else {
+        // Fallback for non-logged in users or if score is not in response
         setScore(prev => ({
-          correct: prev.correct || 0,
-          incorrect: (prev.incorrect || 0) + 1
+          correct: data.isCorrect ? (prev.correct || 0) + 1 : prev.correct || 0,
+          incorrect: data.isCorrect ? prev.incorrect || 0 : (prev.incorrect || 0) + 1
         }));
-      }
-      
-      // Update server score if user is logged in
-      if (user && user.username) {
-        try {
-          const updatedScore = await updateUserScore(user.username, data.isCorrect);
-          if (updatedScore && updatedScore.score) {
-            setScore(updatedScore.score);
-          }
-        } catch (error) {
-          console.error('Error updating score on server:', error);
-        }
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
@@ -125,13 +111,7 @@ export const GameProvider = ({ children }) => {
       // Store username for session persistence
       localStorage.setItem('username', userData.username);
       
-      // If userData already has score, use it
-      if (userData.score && userData.score.correct !== undefined) {
-        setScore(userData.score);
-        return;
-      }
-      
-      // Otherwise try to fetch score
+      // Fetch user's current score
       try {
         const userScore = await getUserScore(userData.username);
         if (userScore && userScore.score) {
